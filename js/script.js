@@ -27,11 +27,11 @@ let chartInstance = null; // Chart.js instance (singleton)
 // Category emoji map for display
 const CATEGORY_EMOJI = { Food: '🍔', Transport: '🚌', Fun: '🎉' };
 
-// Chart colors per category
+// Chart colors per category — high-contrast palette for dark & light mode
 const CHART_COLORS = {
-  Food:      '#f59e0b',
-  Transport: '#3b82f6',
-  Fun:       '#a855f7',
+  Food:      '#FF9F43', // Orange cerah
+  Transport: '#00D2D3', // Cyan
+  Fun:       '#A55EEF', // Lavender/Ungu terang
 };
 
 // ── LocalStorage Helpers ─────────────────────────────────────────────────────
@@ -68,6 +68,8 @@ function validateForm() {
 
   // Reset previous errors
   [itemNameInput, amountInput, categorySelect].forEach(el => el.classList.remove('invalid'));
+  // Also reset stepper wrapper invalid state
+  amountInput.closest('.stepper-wrap')?.classList.remove('invalid');
   nameError.textContent = '';
   amountError.textContent = '';
   categoryError.textContent = '';
@@ -82,6 +84,7 @@ function validateForm() {
   if (!amountInput.value || isNaN(amt) || amt <= 0) {
     amountError.textContent = 'Enter a valid amount greater than 0.';
     amountInput.classList.add('invalid');
+    amountInput.closest('.stepper-wrap')?.classList.add('invalid');
     valid = false;
   }
 
@@ -246,6 +249,9 @@ function renderChart() {
   }
 
   // Create chart for the first time
+  const initialTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const initialLegendColor = initialTheme === 'dark' ? '#ffffff' : '#333333';
+
   chartInstance = new Chart(ctx, {
     type: 'pie',
     data: {
@@ -254,19 +260,21 @@ function renderChart() {
         data,
         backgroundColor: colors,
         borderWidth: 2,
-        borderColor: 'var(--bg-card)',
+        borderColor: '#1e1e2e', // pemisah bersih antar slice, senada bg gelap
       }],
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false, // fleksibel di mobile
       plugins: {
         legend: {
           position: 'bottom',
           labels: {
-            color: getComputedStyle(document.documentElement)
-              .getPropertyValue('--text-primary').trim() || '#1e1e2e',
+            color: initialLegendColor,
             padding: 16,
             font: { size: 13 },
+            usePointStyle: true, // bullet bulat, lebih rapi
+            pointStyleWidth: 10,
           },
         },
         tooltip: {
@@ -299,11 +307,10 @@ function applyTheme(theme) {
   themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
   localStorage.setItem('theme', theme);
 
-  // Update chart legend color if chart exists
+  // Update chart legend text color to match the active theme
   if (chartInstance) {
-    const textColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--text-primary').trim();
-    chartInstance.options.plugins.legend.labels.color = textColor;
+    const legendColor = theme === 'dark' ? '#ffffff' : '#333333';
+    chartInstance.options.plugins.legend.labels.color = legendColor;
     chartInstance.update();
   }
 }
@@ -334,7 +341,34 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// ── Event Listeners ──────────────────────────────────────────────────────────
+// ── Stepper Buttons ──────────────────────────────────────────────────────────
+
+/**
+ * Handle +/- stepper button clicks.
+ * Reads data-target (input id) and data-action (inc/dec) from the button.
+ */
+document.querySelectorAll('.stepper-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input  = document.getElementById(btn.dataset.target);
+    const step   = parseFloat(input.step) || 1;
+    const min    = parseFloat(input.min)  ?? 0;
+    let   val    = parseFloat(input.value) || 0;
+
+    if (btn.dataset.action === 'inc') {
+      val = Math.round((val + step) * 1000) / 1000;
+    } else {
+      val = Math.round((val - step) * 1000) / 1000;
+      if (val < min) val = min;
+    }
+
+    input.value = val;
+
+    // Trigger input event so spending limit re-renders immediately
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+});
+
+
 
 // Form submit — add transaction
 form.addEventListener('submit', e => {

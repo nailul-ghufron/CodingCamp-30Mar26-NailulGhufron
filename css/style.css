@@ -352,7 +352,91 @@ body {
 .chart-wrapper {
   position: relative;
   max-width: 260px;
+  height: 260px; /* diperlukan saat maintainAspectRatio: false */
   margin: 0 auto;
+}
+
+/* =============================================
+   Hide native browser spin-buttons
+   Chrome, Safari, Edge (WebKit)
+   ============================================= */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* =============================================
+   Custom Stepper Wrapper
+   ============================================= */
+.stepper-wrap {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+/* When the inner input is focused, highlight the whole wrapper */
+.stepper-wrap:focus-within {
+  border-color: var(--accent);
+}
+
+/* Input inside stepper — remove its own border since wrapper handles it */
+.stepper-wrap input[type="number"] {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  outline: none;
+  transition: background var(--transition), color var(--transition);
+  min-width: 0; /* prevent overflow on small screens */
+}
+
+/* Invalid state — highlight wrapper border */
+.stepper-wrap.invalid {
+  border-color: var(--danger);
+}
+
+/* + / − buttons */
+.stepper-btn {
+  background: var(--input-bg);
+  border: none;
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 700;
+  width: 2.4rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+  /* Divider lines between button and input */
+  border-right: 1.5px solid var(--border);
+}
+
+.stepper-btn:last-child {
+  border-right: none;
+  border-left: 1.5px solid var(--border);
+}
+
+.stepper-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.stepper-btn:active {
+  opacity: 0.8;
 }
 
 /* =============================================
